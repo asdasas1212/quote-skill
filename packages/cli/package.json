@@ -1,0 +1,33 @@
+{
+  "name": "@dalehkx/quote-cli",
+  "version": "0.1.0",
+  "description": "通用询报价 CLI 工具",
+  "type": "module",
+  "bin": {
+    "quote": "bin/quote.js"
+  },
+  "files": [
+    "bin/",
+    "src/"
+  ],
+  "scripts": {
+    "start": "node bin/quote.js"
+  },
+  "keywords": [
+    "quote",
+    "rfq",
+    "inquiry",
+    "procurement",
+    "cli"
+  ],
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "commander": "^12.1.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

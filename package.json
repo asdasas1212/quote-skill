@@ -1,0 +1,11 @@
+{
+  "name": "quote-skill",
+  "private": true,
+  "description": "通用询报价管理 - Skill + CLI monorepo",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "cli": "npm -w quote-cli"
+  }
+}
