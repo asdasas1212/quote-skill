@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// prepack: sync skills/cass-quote/ → packages/cli/skill/
+// prepack: sync .well-known/agent-skills/cass-quote/ → packages/cli/skill/
 // Runs from the monorepo root via `npm -w @dalehkx/quote-cli run prepack`
 // or from packages/cli/ directly during `npm pack` / `npm publish`.
 
@@ -8,7 +8,7 @@ const path = require('path');
 
 const cliDir = path.join(__dirname, '..');
 const repoRoot = path.join(cliDir, '..', '..');
-const skillSrc = path.join(repoRoot, 'skills', 'cass-quote');
+const skillSrc = path.join(repoRoot, '.well-known', 'agent-skills', 'cass-quote');
 const skillDest = path.join(cliDir, 'skill');
 
 if (!fs.existsSync(skillSrc)) {
@@ -31,4 +31,4 @@ if (fs.existsSync(skillDest)) {
   fs.rmSync(skillDest, { recursive: true });
 }
 copyDir(skillSrc, skillDest);
-console.log(`[prepack] synced skills/cass-quote/ → packages/cli/skill/`);
+console.log(`[prepack] synced .well-known/agent-skills/cass-quote/ → packages/cli/skill/`);

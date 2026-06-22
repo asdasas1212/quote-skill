@@ -13,7 +13,10 @@ const require = createRequire(import.meta.url);
 const { version } = require('../../package.json');
 
 const PKG = '@dalehkx/quote-cli';
-const SKILL_REPO = 'asdasas1212/quote-skill';
+// 主：自托管 well-known 端点（GitHub Pages，不需要认证）
+// 备：GitHub slug（公开仓库时可用，私有仓库需要登录）
+const SKILL_URL = 'https://asdasas1212.github.io/agent-skills';
+const SKILL_REPO_FALLBACK = 'asdasas1212/quote-skill';
 const isWindows = process.platform === 'win32';
 
 function execCmd(cmd, args, opts) {
@@ -85,35 +88,50 @@ async function stepInstallCli() {
   }
 }
 
+function printAgentsLine(out) {
+  // 去掉 ANSI 控制码，找 "Installing to:" 那行
+  const clean = out.replace(/\x1b\[[0-9;]*[a-zA-Z]|\[?\?25[lh]/g, '');
+  const line = clean.split('\n').find(l => l.includes('Installing to:'));
+  if (line) console.log(' ', line.trim());
+}
+
 async function stepInstallSkill() {
   process.stdout.write('  正在安装 Skill...');
   try {
-    // skills CLI 静默运行，不需要 TTY，跨平台支持所有 agent
-    await runAsync('npx', ['-y', 'skills', 'add', SKILL_REPO, '-y', '-g'], { timeout: 60000 });
+    // 优先尝试自托管 URL（无需认证）
+    const out = await runAsync('npx', ['-y', 'skills', 'add', SKILL_URL, '-y', '-g'], { timeout: 60000 });
     console.log(' 完成');
+    printAgentsLine(out);
   } catch {
-    // 网络不通时回退到从全局包复制到 Claude Code
-    console.log('');
-    process.stdout.write('  网络不可用，回退到本地安装...');
-    let skillSrc;
     try {
-      const prefix = execFileSync('npm', ['prefix', '-g'], {
-        stdio: ['ignore', 'pipe', 'pipe'],
-      }).toString().trim();
-      const candidates = [
-        path.join(prefix, 'lib', 'node_modules', PKG, 'skill'),
-        path.join(prefix, 'node_modules', PKG, 'skill'),
-      ];
-      skillSrc = candidates.find(p => fs.existsSync(p));
-    } catch { /* ignore */ }
-
-    if (skillSrc) {
-      const claudeDest = path.join(os.homedir(), '.claude', 'skills', 'cass-quote');
-      copyDir(skillSrc, claudeDest);
-      console.log(` 完成 (仅 Claude Code)`);
-    } else {
+      // 回退到 GitHub slug（公开仓库）
+      const out = await runAsync('npx', ['-y', 'skills', 'add', SKILL_REPO_FALLBACK, '-y', '-g'], { timeout: 60000 });
+      console.log(' 完成');
+      printAgentsLine(out);
+    } catch {
+      // 网络不通时回退到从全局包复制到 Claude Code
       console.log('');
-      console.error(fmt('  ✗ 安装失败，请手动执行: npx skills add %s -y -g', SKILL_REPO));
+      process.stdout.write('  网络不可用，回退到本地安装...');
+      let skillSrc;
+      try {
+        const prefix = execFileSync('npm', ['prefix', '-g'], {
+          stdio: ['ignore', 'pipe', 'pipe'],
+        }).toString().trim();
+        const candidates = [
+          path.join(prefix, 'lib', 'node_modules', PKG, 'skill'),
+          path.join(prefix, 'node_modules', PKG, 'skill'),
+        ];
+        skillSrc = candidates.find(p => fs.existsSync(p));
+      } catch { /* ignore */ }
+
+      if (skillSrc) {
+        const agentsDest = path.join(os.homedir(), '.agents', 'skills', 'cass-quote');
+        copyDir(skillSrc, agentsDest);
+        console.log(` 完成`);
+      } else {
+        console.log('');
+        console.error(`  ✗ 安装失败，请手动执行: npx skills add ${SKILL_URL} -y -g`);
+      }
     }
   }
 }

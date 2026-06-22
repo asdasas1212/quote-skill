@@ -1,0 +1,9 @@
+{
+  "skills": [
+    {
+      "name": "cass-quote",
+      "description": "汽配询报价管理技能，支持账号注册/登录、创建询价单（多配件/VIN解析）、监听报价、比价分析。Use when the user wants to create an inquiry (RFQ), manage quotations, compare prices from suppliers, or confirm purchase orders. Also use when the user mentions 询价、报价、比价、下单、刹车片、配件.",
+      "files": ["SKILL.md"]
+    }
+  ]
+}
