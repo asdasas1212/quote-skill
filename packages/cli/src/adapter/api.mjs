@@ -327,17 +327,23 @@ export class ApiAdapter {
   /**
    * 比价 — 一次 detailV2 同时拿询价信息和报价列表，避免重复请求
    */
-  async compareReplies(inquiryId, sort = 'price') {
+  async compareReplies(inquiryId, sort = 'price', qualityFilter = null) {
     const detail = await this._request('GET', `/inquiries/${inquiryId}/detailV2`, null, {
       platform: 'ANDROID',
     });
     const inquiry = this._mapInquiryDetail(inquiryId, detail);
-    const replies = (await this._fetchRepliesFromDetail(inquiryId, detail)).filter(r => r.priced);
+    let replies = (await this._fetchRepliesFromDetail(inquiryId, detail)).filter(r => r.priced);
+
+    // 按品质过滤：qualityFilter 为 qualityId 数组，直接与 qualityId 字段精确匹配
+    if (qualityFilter && qualityFilter.length > 0) {
+      replies = replies.filter(r => qualityFilter.includes(r.qualityId));
+    }
 
     const sorted = [...replies].sort((a, b) => {
       if (sort === 'price')    return a.price - b.price;
       if (sort === 'delivery') return (a.delivery || 999) - (b.delivery || 999);
       if (sort === 'brand')    return (a.brand || '').localeCompare(b.brand || '');
+      if (sort === 'quality')  return (a.qualityId || '').localeCompare(b.qualityId || '');
       return 0;
     });
 
@@ -828,7 +834,8 @@ export class ApiAdapter {
       partNum:    item.partsNum || '',
       delivery:   item.arrivalTime || null,
       note:       item.remark || '',
-      quality:    item.qualityDescription || '',
+      qualityId:  item.quality || '',              // API 枚举值，用于过滤（如 ORIGINAL_BRAND）
+      quality:    item.qualityDescription || '',   // 中文描述，用于展示（如 原厂件）
       facilityId:   item.location     || '',   // 仓库 ID（用于下单）
       location:     item.locationName || '',   // 仓库名称（用于展示）
     };

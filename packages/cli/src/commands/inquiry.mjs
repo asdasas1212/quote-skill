@@ -1,5 +1,12 @@
 import { getAdapter } from '../adapter/index.mjs';
 
+// API 支持的品质 qualityId 合法值（来自 GET /inquiries/{id}/detailV2 的 qualities 列表）
+const VALID_QUALITY_IDS = new Set([
+  'ORIGINAL_BRAND', 'ORIGINAL_CURRENCY', 'ORIGINAL_INLAND_4S', 'ORIGINAL_OTHERS',
+  'EXTERNAL_BRAND', 'INTERNAL_BRAND',
+  'SECOND_HAND', 'EQUIVALENT_BRAND', 'OTHER_BRAND',
+]);
+
 export function registerInquiryCommands(program) {
   const inquiry = program.command('inquiry').description('询价单管理');
 
@@ -14,6 +21,21 @@ export function registerInquiryCommands(program) {
     .option('-m, --model <model>', '车型（如 朗逸）')
     .option('-q, --quantity <n>', '数量（单配件时使用）', '1')
     .option('-n, --note <text>', '备注')
+    .option(
+      '--quality <ids...>',
+      [
+        '配件品质要求，传 qualityId，可多个，不传则使用平台默认。可选值：',
+        '  ORIGINAL_BRAND      原厂',
+        '  ORIGINAL_CURRENCY   原厂(非国内4S)',
+        '  ORIGINAL_INLAND_4S  原厂(国内4S)',
+        '  ORIGINAL_OTHERS     原厂再制造',
+        '  EXTERNAL_BRAND      国际品牌',
+        '  INTERNAL_BRAND      其他品牌',
+        '  SECOND_HAND         拆车件',
+        '  EQUIVALENT_BRAND    同质件',
+        '  OTHER_BRAND         其他',
+      ].join('\n')
+    )
     .action(async (opts) => {
       const adapter = getAdapter();
 
@@ -62,6 +84,14 @@ export function registerInquiryCommands(program) {
       // 多配件：每个 product 对应一个 need
       const products = Array.isArray(opts.product) ? opts.product : [opts.product];
 
+      // 校验品质参数
+      const invalid = (opts.quality || []).filter(q => !VALID_QUALITY_IDS.has(q));
+      if (invalid.length > 0) {
+        console.error(`✗ 无效的品质 ID: ${invalid.join(', ')}`);
+        console.error(`  可选值: ${[...VALID_QUALITY_IDS].join(' | ')}`);
+        process.exit(1);
+      }
+
       const record = await adapter.createInquiry({
         products,                               // 多配件数组
         product:  products[0],                  // 兼容单配件展示
@@ -69,9 +99,10 @@ export function registerInquiryCommands(program) {
         vehicle:  carModelName,
         carBrandId,
         carBrandName,
-        vin:      opts.vin    || '',
+        vin:      opts.vin      || '',
         quantity: products.length === 1 ? opts.quantity : '1',
-        note:     opts.note   || '',
+        note:     opts.note     || '',
+        qualities: opts.quality || undefined,
       });
 
       console.log(`✓ 询价单已创建: ${record.id}`);
