@@ -1,0 +1,7 @@
+interface:
+  display_name: "询报价管理"
+  short_description: "创建询价、管理报价、比价下单"
+  default_prompt: "Use $cass-quote to create a new inquiry for auto parts."
+
+policy:
+  allow_implicit_invocation: true

@@ -13,6 +13,7 @@ const require = createRequire(import.meta.url);
 const { version } = require('../../package.json');
 
 const PKG = '@dalehkx/quote-cli';
+const SKILL_REPO = 'asdasas1212/quote-skill';
 const isWindows = process.platform === 'win32';
 
 function execCmd(cmd, args, opts) {
@@ -75,7 +76,7 @@ async function stepInstallCli() {
   }
 
   try {
-    await runAsync('npm', ['install', '-g', '--ignore-scripts', PKG], { timeout: 120000 });
+    await runAsync('npm', ['install', '-g', '--prefer-online', '--ignore-scripts', PKG], { timeout: 120000 });
     console.log(' 完成');
   } catch {
     console.log('');
@@ -84,29 +85,37 @@ async function stepInstallCli() {
   }
 }
 
-function installSkill() {
-  // 找到全局安装包内的 skill 目录（不同平台路径不同）
-  let skillSrc;
+async function stepInstallSkill() {
+  process.stdout.write('  正在安装 Skill...');
   try {
-    const prefix = execFileSync('npm', ['prefix', '-g'], {
-      stdio: ['ignore', 'pipe', 'pipe'],
-    }).toString().trim();
-    // 尝试两种常见路径：标准 npm 和 Homebrew/nvm 等
-    const candidates = [
-      path.join(prefix, 'lib', 'node_modules', PKG, 'skill'),
-      path.join(prefix, 'node_modules', PKG, 'skill'),
-    ];
-    skillSrc = candidates.find(p => fs.existsSync(p));
-  } catch { /* ignore */ }
+    // skills CLI 静默运行，不需要 TTY，跨平台支持所有 agent
+    await runAsync('npx', ['-y', 'skills', 'add', SKILL_REPO, '-y', '-g'], { timeout: 60000 });
+    console.log(' 完成');
+  } catch {
+    // 网络不通时回退到从全局包复制到 Claude Code
+    console.log('');
+    process.stdout.write('  网络不可用，回退到本地安装...');
+    let skillSrc;
+    try {
+      const prefix = execFileSync('npm', ['prefix', '-g'], {
+        stdio: ['ignore', 'pipe', 'pipe'],
+      }).toString().trim();
+      const candidates = [
+        path.join(prefix, 'lib', 'node_modules', PKG, 'skill'),
+        path.join(prefix, 'node_modules', PKG, 'skill'),
+      ];
+      skillSrc = candidates.find(p => fs.existsSync(p));
+    } catch { /* ignore */ }
 
-  if (!skillSrc) {
-    console.log('  ✗ 未找到 skill 目录，跳过');
-    return;
+    if (skillSrc) {
+      const claudeDest = path.join(os.homedir(), '.claude', 'skills', 'cass-quote');
+      copyDir(skillSrc, claudeDest);
+      console.log(` 完成 (仅 Claude Code)`);
+    } else {
+      console.log('');
+      console.error(fmt('  ✗ 安装失败，请手动执行: npx skills add %s -y -g', SKILL_REPO));
+    }
   }
-
-  const skillDest = path.join(os.homedir(), '.claude', 'skills', 'cass-quote');
-  copyDir(skillSrc, skillDest);
-  console.log(`  ✓ Skill 已安装到 ${skillDest}`);
 }
 
 function copyDir(src, dest) {
@@ -148,8 +157,8 @@ export function registerInstallCommand(program) {
       console.log('1/3  CLI');
       await stepInstallCli();
 
-      console.log('\n2/3  Skill（Claude Code 集成）');
-      installSkill();
+      console.log('\n2/3  Skill（多 agent 集成）');
+      await stepInstallSkill();
 
       if (!opts.skipLogin) {
         console.log('\n3/3  登录');
@@ -157,6 +166,6 @@ export function registerInstallCommand(program) {
       }
 
       console.log('\n安装完成！');
-      console.log('   现在可以对 Claude Code 说：「帮我创建一条询价单」\n');
+      console.log('   现在可以对你的 AI 工具说：「帮我创建一条询价单」\n');
     });
 }
