@@ -15,7 +15,7 @@ const { version } = require('../../package.json');
 const PKG = '@dalehkx/quote-cli';
 // 主：自托管 well-known 端点（GitHub Pages，不需要认证）
 // 备：GitHub slug（公开仓库时可用，私有仓库需要登录）
-const SKILL_URL = 'https://asdasas1212.github.io/agent-skills';
+const SKILL_URL = 'https://asdasas1212.github.io/quote-skill';
 const SKILL_REPO_FALLBACK = 'asdasas1212/quote-skill';
 const isWindows = process.platform === 'win32';
 
