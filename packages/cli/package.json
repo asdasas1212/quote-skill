@@ -1,6 +1,6 @@
 {
   "name": "@dalehkx/quote-cli",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "description": "通用询报价 CLI 工具",
   "type": "module",
   "bin": {
