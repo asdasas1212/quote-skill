@@ -8,10 +8,13 @@
   },
   "files": [
     "bin/",
-    "src/"
+    "src/",
+    "scripts/",
+    "skill/"
   ],
   "scripts": {
     "start": "node bin/quote.js",
+    "prepack": "node scripts/prepack.cjs",
     "test": "vitest run",
     "test:watch": "vitest"
   },

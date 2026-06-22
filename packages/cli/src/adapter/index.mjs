@@ -1,24 +1,20 @@
 import { Store } from '../store.mjs';
-import { LocalAdapter } from './local.mjs';
 import { ApiAdapter } from './api.mjs';
+import { API_BASE_DEFAULT } from '../constants.mjs';
 
 let _adapter = null;
 
 /**
- * 获取数据适配器（单例）
- * 根据 config.mode 决定使用本地存储还是远程 API
+ * 获取 API 适配器（单例）
  */
 export function getAdapter() {
   if (_adapter) return _adapter;
-
-  const store = new Store();
-  const config = store.getConfig();
-
-  if (config.mode === 'api') {
-    _adapter = new ApiAdapter(config);
-  } else {
-    _adapter = new LocalAdapter();
-  }
-
+  const config = new Store().getConfig();
+  _adapter = new ApiAdapter({ apiBase: config.apiBase || API_BASE_DEFAULT });
   return _adapter;
+}
+
+/** 重置单例（供测试使用） */
+export function resetAdapter() {
+  _adapter = null;
 }
