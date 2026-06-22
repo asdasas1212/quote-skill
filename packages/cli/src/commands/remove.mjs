@@ -1,7 +1,7 @@
 /**
  * remove 向导 —— 一条命令卸载 Skill + 全局 CLI
  *
- * 用法：quote remove
+ * 用法：npx @dalehkx/quote-cli@latest remove
  */
 import { execFileSync, execFile } from 'node:child_process';
 import fs from 'node:fs';

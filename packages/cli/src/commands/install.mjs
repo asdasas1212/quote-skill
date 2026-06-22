@@ -1,7 +1,7 @@
 /**
  * install 向导 —— 一条命令完成 CLI 全局安装 + Skill 安装 + 登录
  *
- * 用法：npx cass-quote install
+ * 用法：npx @dalehkx/quote-cli@latest install
  */
 import { execFileSync, execFile } from 'node:child_process';
 import { createRequire } from 'node:module';
