@@ -9,6 +9,7 @@ import { registerOrderCommands } from '../src/commands/order.mjs';
 import { registerConfigCommands } from '../src/commands/config.mjs';
 import { registerLoginCommands } from '../src/commands/login.mjs';
 import { registerInstallCommand } from '../src/commands/install.mjs';
+import { registerRemoveCommand } from '../src/commands/remove.mjs';
 
 const { version } = createRequire(import.meta.url)('../package.json');
 
@@ -20,6 +21,7 @@ program
   .version(version);
 
 registerInstallCommand(program);
+registerRemoveCommand(program);
 registerInquiryCommands(program);
 registerReplyCommands(program);
 registerCompareCommand(program);
