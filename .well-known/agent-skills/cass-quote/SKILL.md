@@ -88,7 +88,9 @@ quote inquiry create -p "刹车片" --brand VW --brand-name 大众 -m 朗逸 --q
 
 ### 监听报价
 
-用 CronCreate 每分钟轮询一次，有实价报价就停。不要用 `watch`——它是持续进程，agent 只能在退出后拿到输出，实时 stdout 不可见。
+用 CronCreate 轮询，有新报价立即展示但继续轮询；到达次数上限后 CronDelete 退出。不要用 `watch`——它是持续进程，agent 只能在退出后拿到输出。
+
+<!-- 轮询间隔和上限在下方 CronCreate 模板里调整 -->
 
 #### 标准流程
 
@@ -100,21 +102,21 @@ quote inquiry detail <单号>
 
 输出中出现 `关联报价 (N 条)` → 有实价报价（`listReplies` 已过滤 price=0 的占坑槽位），直接展示，不需要轮询。
 
-**第二步：无报价，注册每分钟轮询**
+**第二步：注册轮询**
 
 ```
 CronCreate:
-  cron: "*/1 * * * *"
+  cron: "*/1 * * * *"   # ← 轮询间隔，按需调整（每分钟 */1，每5分钟 */5）
   recurring: true
-  prompt: "检查询价单 <单号> 报价（第 N 次，最多 30 次）：运行 quote inquiry detail <单号>，
-           若出现"关联报价"则展示报价并 CronDelete <jobId> 停止轮询；
+  prompt: "检查询价单 <单号> 报价（第 N 次，最多 30 次）：运行 quote inquiry detail <单号>，  # ← 30 = 最大轮询次数
+           若出现"关联报价"则展示报价，继续等下次触发；
            若 N >= 30 则告知用户等待超时并 CronDelete <jobId>；
            否则等下次触发。"
 ```
 
-- `*/1 * * * *` 每分钟触发，30 次 = 30 分钟上限
-- prompt 里带入计数 N 和 jobId，agent 每次唤醒自己维护计数
-- 发现报价或到达上限后 CronDelete 结束
+- 轮询间隔：`*/1 * * * *`（每分钟）；改为 `*/5 * * * *` 即每 5 分钟
+- 最大次数：prompt 里的 `30`；按「间隔 × 次数 = 总等待时长」换算调整
+- 有新报价时展示后继续轮询，直到用户手动停止或到达上限
 
 **人工终端场景**（用户自己盯着终端）：
 ```bash
